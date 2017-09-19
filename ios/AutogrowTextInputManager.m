@@ -29,13 +29,14 @@ NSUInteger const kMaxDeferedGetScrollView = 15;
 - (void)my_setText:(NSString *)text
 {
   [self my_setText:text];
-  
+
   UITextView *textView = [self valueForKey:@"_textView"];
   if (textView != nil && [self respondsToSelector:@selector(textViewDidChange:)])
   {
-    dispatch_async(dispatch_get_main_queue(), ^{
-      [self textViewDidChange:textView];
-    });
+    // see https://github.com/wix/react-native-autogrow-textinput/issues/31#issuecomment-327802356
+    // dispatch_async(dispatch_get_main_queue(), ^{
+    //   [self textViewDidChange:textView];
+    // });
   }
 }
 @end
@@ -81,11 +82,11 @@ RCT_EXPORT_METHOD(applySettingsForInput:(nonnull NSNumber *)textInputReactTag se
             uiTextView.scrollEnabled = NO;
             uiTextView.bounces = NO;
         }
-        
+
         if([settings[@"enableScrollToCaret"] boolValue])
         {
             _deferedInitializeAccessoryViewsCount = 0;
-            
+
             dispatch_async(dispatch_get_main_queue(), ^{
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [self getScrollViewContainerForTextView:uiTextView completion:^(UIScrollView* scrollView)
@@ -93,7 +94,7 @@ RCT_EXPORT_METHOD(applySettingsForInput:(nonnull NSNumber *)textInputReactTag se
                         if(scrollView != nil)
                         {
                             [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onTextViewDidChangeNotification:) name:UITextViewTextDidChangeNotification object:uiTextView];
-                            
+
                             if(_inputToScrollViews == nil)
                             {
                                 _inputToScrollViews = [NSMapTable weakToWeakObjectsMapTable];
@@ -139,7 +140,7 @@ RCT_EXPORT_METHOD(performCleanupForInput:(nonnull NSNumber *)textInputReactTag)
         if ([view isKindOfClass:[RCTScrollView class]])
             break;
     }
-    
+
     if ([view isKindOfClass:[RCTScrollView class]])
     {
         RCTScrollView *rctScrollView = (RCTScrollView *)view;
@@ -154,7 +155,7 @@ RCT_EXPORT_METHOD(performCleanupForInput:(nonnull NSNumber *)textInputReactTag)
     if (_deferedInitializeAccessoryViewsCount < kMaxDeferedGetScrollView)
     {
         _deferedInitializeAccessoryViewsCount++;
-        
+
         UIScrollView *scrollView = [self getScrollContainerForTextView:textView];
         if(scrollView != nil)
         {
@@ -186,7 +187,7 @@ RCT_EXPORT_METHOD(performCleanupForInput:(nonnull NSNumber *)textInputReactTag)
         if(caretRect.size.width > 0 && caretRect.size.height > 0)
         {
             caretRect = [scrollView convertRect:caretRect fromView:textView];
-            
+
             CGRect visibleRect = CGRectMake(0, scrollView.contentOffset.y, scrollView.frame.size.width, scrollView.frame.size.height - scrollView.contentInset.bottom);
             if (!CGRectIntersectsRect(visibleRect, caretRect))
             {
